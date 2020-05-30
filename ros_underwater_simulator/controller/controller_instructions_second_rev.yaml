@@ -1,0 +1,7 @@
+#This controller publishes any transformations for any moving joints
+#type: joint_state_controller/JointStateController
+#publish_rate: 50
+#Adding controller and specifying which joint to control  
+type: "position_controllers/JointPositionController"
+joint: rev_to_second_link
+pid: {p: 10.0, i: 0.01, d: 1}

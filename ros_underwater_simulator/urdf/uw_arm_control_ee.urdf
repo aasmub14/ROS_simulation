@@ -1,0 +1,400 @@
+<?xml version="1.0"?>
+<robot name="twoDOF_manipulator" xmlns:xacro="www.ros.org/wiki/xacro">
+  
+	<!--Xacro constants-->
+	
+	<!--Numerical-->	
+	<xacro:property name="mass" value="3.0"/>
+	<xacro:property name="len" value="0.3"/>
+	<xacro:property name="boxDim" value="0.5"/>
+	<xacro:property name="pi" value="3.1416"/>
+	<xacro:property name="damping" value="0.2"/>
+	<xacro:property name="friction" value="0.1"/>
+	<xacro:property name="radius" value="0.02"/>
+	<!--Box properties-->
+	<xacro:property name="boxB" value="0.06 0.01 0.18"/>
+	<xacro:property name="boxS" value="0.115 0.01 0.18"/>
+	<xacro:property name="boxMass" value="0.18"/>
+	<!--Strings-->	
+
+	<!--Xacro math-->
+	
+	<!--Inertia along 'easy' axis, massive cylinder-->
+	<xacro:property name="inertiaL" value="${(mass*radius*radius/4) + (mass*len*len/12)}"/>
+	<!--Inertia along 'hard' axis, massive cylinder-->
+	<xacro:property name="inertiaH" value="${mass*radius*radius/2}"/>
+
+	<!--Xacro macros-->
+	
+	<!--Inertia and mass of massive rod-->	
+	<xacro:macro name="default_inertia_rod" params="masse">
+		<inertial>
+			<mass value="${masse}" />
+			<inertia ixx="${inertiaH}" ixy="${inertiaH}" ixz="${inertiaH}" 
+				iyy="${inertiaH}" iyz="${inertiaH}"
+				izz="${inertiaL}" />
+		</inertial>
+	</xacro:macro>
+	<!--Default link creation-->
+	<xacro:macro name="linkage" params="enumeration append">
+		<link name="${enumeration}_link">
+			<visual>
+				<geometry>
+					<cylinder length="${len}" radius="${radius}"/>
+				</geometry>
+				<origin xyz="0 0 ${len/2}" rpy="0 ${pi/2} 0"/>
+				<material name="grey"/>
+			</visual>
+			<collision>
+				<geometry>
+					<cylinder length="${len}" radius="${radius}"/>
+				</geometry>
+				<origin xyz="0 0 ${len/2}" rpy="0 ${pi/2} 0"/>
+			</collision>
+			<xacro:default_inertia_rod masse="3" />
+		</link>
+	<!--Joint creation for the macroed link-->
+		<joint name="rev_to_${enumeration}_link" type="revolute">
+			<parent link="base_link"/>
+			<child link="${enumeration}_link"/>
+			<origin xyz="${boxDim/2 + radius +.01 + append*(len+radius)} 0 0}"/>
+			<axis xyz="1 0 0"/>
+		</joint>
+	</xacro:macro>
+
+	<!--Color definitions-->
+	<material name="yellow">
+		<color rgba="1 1 0 1"/>
+	</material>
+
+	<material name="black">
+		<color rgba="0 0 0 1"/>
+	</material>
+
+	<material name="grey">
+		<color rgba="0.5 0.5 0.5 1"/>
+	</material>
+	<link name="world"/>
+	<!--ROV/base link-->
+	<link name="base_link"><!--The base link is where the reference frame is set-->
+    <visual>
+      <geometry>
+        <box size="${boxDim} ${boxDim} ${boxDim}"/>
+      </geometry>
+			<material name="yellow"/>
+    </visual>
+		<collision>
+			<geometry>
+				<box size="${boxDim} ${boxDim} ${boxDim}"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="${100.00}"/>
+			<inertia ixx="${inertiaH}" ixy="${inertiaH}" ixz="${inertiaH}" iyy="${inertiaH}" iyz="${inertiaH}" izz="${inertiaL}"/>
+		</inertial>
+  </link>
+
+  <joint name="reference" type="fixed">
+    <origin xyz="0.0 0.0 1"/>
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+	<!--First_link-->	
+	<link name="first_link">
+		<visual>
+			<geometry>
+				<cylinder length="${len}" radius="${radius}"/>
+			</geometry>
+			<origin xyz="0 ${len/2 + radius} 0" rpy="${pi/2} 0 0"/>
+			<material name="grey"/>
+		</visual>
+		<collision>
+			<geometry>
+				<cylinder length="${len}" radius="${radius}"/>
+			</geometry>
+			<origin xyz="0 ${len/2 + radius} 0" rpy="${pi/2} 0 0"/>
+		</collision>
+		<xacro:default_inertia_rod masse="3" />
+	</link>
+	<!--Joint creation for the macroed link-->
+	<joint name="rev_to_first_link" type="revolute">
+		<parent link="base_link"/>
+		<child link="first_link"/>
+		<origin xyz="0 ${(boxDim/2) + radius} 0"/>
+		<axis xyz="1 0 0"/>
+		<limit effort="1000.0" lower="-0.548" upper="0.548" velocity="0.5"/>
+		<dynamics damping="0.2" friction="0.2"/>
+	</joint>
+
+	<!--second_link-->	
+	<link name="second_link">
+		<visual>
+			<geometry>
+				<cylinder length="${len}" radius="${radius}"/>
+			</geometry>
+			<origin xyz="0 ${len/2 + radius} 0" rpy="${pi/2} 0 0"/>
+			<material name="grey"/>
+		</visual>
+		<collision>
+			<geometry>
+				<cylinder length="${len}" radius="${radius}"/>
+			</geometry>
+			<origin xyz="0 ${len/2 + radius} 0" rpy="${pi/2} 0 0"/>
+		</collision>
+		<xacro:default_inertia_rod masse="3.0" />
+	</link>	
+	<!--Joint creation for the macroed link-->
+	<joint name="rev_to_second_link" type="revolute">
+		<parent link="first_link"/>
+		<child link="second_link"/>
+		<origin xyz="0 ${len + 2*radius} 0"/>
+		<axis xyz="1 0 0"/>
+		<limit effort="1000.0" lower="-0.548" upper="0.548" velocity="0.5"/>
+		<dynamics damping="0.1" friction="0.1"/>
+	</joint>
+
+    	<!--Box end effector-->
+
+	<!--Back-->
+	<link name="box_back"><!--The base link is where the reference frame is set-->
+    <visual>
+      <geometry>
+        <box size="0.06 0.01 0.18"/>
+      </geometry>
+			<material name="yellow"/>
+    </visual>
+		<collision>
+			<geometry>
+				<box size="0.06 0.01 0.18"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="${boxMass}"/>
+			<inertia ixx="${0.01}" ixy="${0.0}" ixz="${0.0}" iyy="${0.01}" iyz="${0.0}" izz="${0.01}"/>
+		</inertial>
+ 	</link>
+
+	<!--Fix to second link-->
+	<joint name="box_to_second_link" type="fixed">
+		<parent link="second_link"/>
+		<child link="box_back"/>
+		<origin xyz="0 ${len + 2*radius} 0"/>
+	</joint>
+
+	<!--Front-->
+	<link name="box_front"><!--The base link is where the reference frame is set-->
+    <visual>
+      <geometry>
+        <box size="0.06 0.01 0.18"/>
+      </geometry>
+			<material name="yellow"/>
+    </visual>
+		<collision>
+			<geometry>
+				<box size="0.06 0.01 0.18"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="${boxMass}"/>
+			<inertia ixx="${0.01}" ixy="${0.0}" ixz="${0.0}" iyy="${0.01}" iyz="${0.0}" izz="${0.01}"/>
+		</inertial>
+ 	</link>
+
+	<!--Fix to back part-->
+	<joint name="boxB_to_boxF" type="fixed">
+		<parent link="box_back"/>
+		<child link="box_front"/>
+		<origin xyz="0 0.115 0"/>
+	</joint>
+
+	<!--Side-->
+	<link name="box_side_left">
+	<visual>
+      <geometry>
+        <box size="0.125 0.01 0.16"/>
+      </geometry>
+			<material name="yellow"/>
+    </visual>
+		<collision>
+			<geometry>
+				<box size="0.125 0.01 0.16"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="${boxMass}"/>
+			<inertia ixx="${0.01}" ixy="${0.0}" ixz="${0.0}" iyy="${0.01}" iyz="${0.0}" izz="${0.01}"/>
+		</inertial>
+ 	</link>
+
+	<!--Fix to back part-->
+	<joint name="boxL_to_boxB" type="fixed">
+		<parent link="box_back"/>
+		<child link="box_side_left"/>
+		<origin xyz="0.0375 0.0575 0.01" rpy="0 0 ${pi/2}"/>
+	</joint>
+
+	<!--Hook with pusher-->
+	<link name="hook">
+    <visual>
+      <geometry>
+        <cylinder length="0.045" radius="0.0045"/>
+      </geometry>
+			<origin xyz="0 0 ${-0.0225 - 0.009}" rpy="0 0 0"/>
+			<material name="yellow"/>
+    </visual>
+		<collision>
+			<geometry>
+				<cylinder length="0.045" radius="0.0045"/>
+			</geometry>
+			<origin xyz="0 0 ${-0.0225 - 0.009}" rpy="0 0 0"/>
+		</collision>
+		<inertial>
+			<mass value="${boxMass}"/>
+			<inertia ixx="${0.01}" ixy="${0.0}" ixz="${0.0}" iyy="${0.01}" iyz="${0.0}" izz="${0.01}"/>
+		</inertial>
+ 	</link>
+
+	<link name="pusher">
+    <visual>
+      <geometry>
+        <cylinder length="0.027" radius="0.005"/>
+      </geometry>
+			<origin xyz="0 0 0.0085" rpy="0 0 0"/>
+			<material name="yellow"/>
+    </visual>
+		<collision>
+			<geometry>
+				<cylinder length="0.027" radius="0.007"/>
+			</geometry>
+			<origin xyz="0 0 0.0085" rpy="0 0 0"/>
+		</collision>
+		<inertial>
+			<mass value="${boxMass}"/>
+			<inertia ixx="${0.01}" ixy="${0.0}" ixz="${0.0}" iyy="${0.01}" iyz="${0.0}" izz="${0.01}"/>
+		</inertial>
+ 	</link>
+
+	<!--Fixed to hook-->
+	<joint name="push_to_hook" type="fixed">
+		<parent link="hook"/>
+		<child link="pusher"/>
+		<origin xyz="0 0.0175 -0.04175" rpy="${pi/2 - pi/12} 0 0"/>
+	</joint>
+
+	<!--Revolute at box-->
+	<joint name="hook_to_boxB" type="revolute">
+		<parent link="box_back"/>
+		<child link="hook"/>
+		<origin xyz="0 0.0281 -0.1079" rpy="${pi/2} 0 0"/>
+		<axis xyz="1 0 0"/>
+		<dynamics damping="0.01" friction="0.01"/>
+		<limit effort="1000.0" lower="-0.17" upper="${pi/4}" velocity="0.5"/>
+	</joint>
+
+	<!--Button-->
+	<link name="button">
+    <visual>
+      <geometry>
+        <box size="0.013 0.013 0.004"/>
+      </geometry>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<material name="yellow"/>
+    </visual>
+		<collision>
+			<geometry>
+				<box size="0.013 0.013 0.004"/>
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+		</collision>
+		<inertial>
+			<mass value="${boxMass}"/>
+			<inertia ixx="${0.01}" ixy="${0.0}" ixz="${0.0}" iyy="${0.01}" iyz="${0.0}" izz="${0.01}"/>
+		</inertial>
+ 	</link>
+
+	<!--Prismatic at box-->
+	<joint name="button_to_boxB" type="prismatic">
+		<parent link="box_back"/>
+		<child link="button"/>
+		<origin xyz="0 0.0625 -0.07" rpy="0 0 0"/>
+		<axis xyz="0 0 1"/>
+         <limit effort="1000.0" lower="0.0" upper="0.004" velocity="100.0"/>
+	</joint>
+	
+
+	<!--Gazebo-ROS plugin-->
+	<gazebo>
+		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+			<robotNamespace>/uw_arm</robotNamespace>
+		</plugin>
+	</gazebo>
+
+	<!--Transmissions-->
+	<!--First revolute-->
+    <transmission name="rev_first_link">
+        <type>transmission_interface/SimpleTransmissions</type>
+        <actuator name="$motor_rev_joint">
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+        <joint name="rev_to_first_link">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+    </transmission>
+
+	<!--Second revolute-->
+    <transmission name="rev_second_link">
+        <type>transmission_interface/SimpleTransmissions</type>
+        <actuator name="$motor_rev_two_joint">
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+        <joint name="rev_to_second_link">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+    </transmission>
+	
+	<!--Adding gazebo attributes-->
+	<gazebo reference="button">
+		<gravity>false</gravity>
+		<selfCollide>true</selfCollide>
+		<material>Gazebo/Red</material>
+		<mu1>0.2</mu1>
+    	<mu2>0.2</mu2>
+	</gazebo>
+
+	<gazebo reference="pusher">
+		<gravity>false</gravity>
+		<selfCollide>true</selfCollide>
+		<material>Gazebo/Green</material>
+		<mu1>0.2</mu1>
+    	<mu2>0.2</mu2>
+	</gazebo>
+	
+	<gazebo reference="hook">
+		<gravity>false</gravity>
+		<selfCollide>true</selfCollide>
+		<material>Gazebo/Green</material>
+		<mu1>0.2</mu1>
+    	<mu2>0.2</mu2>
+	</gazebo>
+
+	<gazebo reference="second_link">
+		<gravity>false</gravity>
+		<selfCollide>true</selfCollide>
+		<material>Gazebo/Grey</material>
+		<mu1>0.2</mu1>
+    	<mu2>0.2</mu2>
+	</gazebo>
+
+	<gazebo reference="first_link">
+		<gravity>false</gravity>
+		<selfCollide>true</selfCollide>
+		<material>Gazebo/Grey</material>
+		<mu1>0.2</mu1>
+    	<mu2>0.2</mu2>
+	</gazebo>
+
+	<gazebo reference="base_link">
+		<gravity>false</gravity>
+		<material>Gazebo/Yellow</material>
+	</gazebo>
+</robot>

@@ -1,0 +1,4 @@
+#This controller publishes any transformations for any moving joints
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 60

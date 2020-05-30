@@ -1,0 +1,46 @@
+<launch>
+<!--Sets global constants(or strings) for script-->
+  <arg name="model" default="$(find ros_underwater_simulator)/urdf/uw_arm_control_ee.urdf"/><!--Path to urdf model-->
+  <arg name="gui" default="true" /><!--GUI toggle-->
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro $(arg model)" /><!--model is linked to the specified path and executed both as xacro and urdf-->
+  <param name="use_gui" value="$(arg gui)"/>
+
+<!--Loads Gazebo related elements-->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+<!--Loads the URDF with the arg containing the path to specified URDF-->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-z 0 -unpause -urdf -model robot -param robot_description" respawn="false" output="screen" />
+
+<!--Rviz loading(Optional)-->
+  <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" />-->
+
+<!--Loads controllers-->
+  <!-- <rosparam file="$(find ros_underwater_simulator)/controller/controller_instructions.yaml" command="load" ns="first_rev_controller"/>
+  <node name="controller_spawner_first_rev" pkg="controller_manager" type="spawner" args="first_rev_controller" /> -->
+
+<!--Loads controllers-->
+  <!-- <rosparam file="$(find ros_underwater_simulator)/controller/controller_instructions_second_rev.yaml" command="load" ns="second_rev_controller"/>
+  <node name="controller_spawner_second_rev" pkg="controller_manager" type="spawner" args="second_rev_controller" /> -->
+
+<!--Calls and loads the joint state controller which publishes the joint states-->
+  <!-- <rosparam file="$(find ros_underwater_simulator)/controller/jointStates.yaml" command="load" ns="joint_state_controller" /> 
+  <node name="joint_state_controller_spawner" pkg="controller_manager" type="spawner" args="joint_state_controller" /> -->
+
+<!--Calls and loads the robot state publisher-->
+  <!-- <param name="my_robot_description" textfile="$(find ros_underwater_simulator)/urdf/uw_arm_control_ee.urdf"/> -->
+  <!-- <node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
+      <remap from="robot_description" to="robot_description" />
+      <remap from="joint_states" to="different_joint_states" />
+    </node> -->
+</launch>

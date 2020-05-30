@@ -1,0 +1,4 @@
+#Adding controller and specifying which joint to control
+type: "position_controllers/JointPositionController"
+joint: rev_to_first_link
+pid: {p: 10.0, i: 0.01, d: 1}
